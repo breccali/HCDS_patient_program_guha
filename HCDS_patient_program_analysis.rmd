@@ -384,6 +384,87 @@ plot_7 / plot_8
 ```
 
 ```{r}
+# Performing a second hypothesis on the mock code to test the difference between survey 1 & 2:
+# Wilcox Test:
+
+confidence_numeric <- setNames(1:5, confidence_levels)
+
+statements <- list(
+  "Communication Techniques" = c("DEMONSTRATE.APPROPRIATE.COMMUNICATION.TECHNIQUES..I.E..CLOSED.LOOP.COMMUNICATION..DURING.A.CODE.BLUE",
+  "DEMONSTRATE.APPROPRIATE.COMMUNICATION.TECHNIQUES..I.E..CLOSED.LOOP.COMMUNICATION..DURING.A.CODE.BLUE2"),
+  "Teamwork" = c("USE.TEAMWORK.DURING.A.CODE.BLUE.SIMULATION",
+                 "USE.TEAMWORK.DURING.A.CODE.BLUE.SIMULATION2"),
+  "Patient Resuscitation Interventions" = c("PROVIDE.APPROPRIATE.INTERVENTIONS.FOR.PATIENT.RESUSCITATION",
+                      "PROVIDE.APPROPRIATE.INTERVENTIONS.FOR.PATIENT.RESUSCITATION2"),
+  "Roles & Actions" = c("DESCRIBE.THE.VARIOUS.ROLES.AND.ACTIONS.ASSOCIATED.WITH.THOSE.ROLES.DURING.A.CODE.BLUE",
+              "DESCRIBE.THE.VARIOUS.ROLES.AND.ACTIONS.ASSOCIATED.WITH.THOSE.ROLES.DURING.A.CODE.BLUE2")
+)
+
+results <- lapply(names(statements), function(name) {
+  pre_mock <- statements[[name]][1]
+  post_mock <- statements[[name]][2]
+  
+  pre <- confidence_numeric[data[[pre_mock]]]
+  post <- confidence_numeric[data[[post_mock]]]
+  
+  test_result <- wilcox.test(pre, post, paired = TRUE, exact = FALSE)
+  
+  tibble(
+    Item = name,
+    V_statistic = test_result$statistic,
+    p_value = test_result$p.value
+  )
+})
+
+results_df <- results_df %>%
+  mutate(
+    `p-value` = formatC(p_value, digits = 3)
+) 
+
+kable(results_df %>% select(Item, `V Statistic`, `p-value`), 
+      caption = "Wilcoxon Signed-Rank Test Results for Confidence Scores",
+      col.names = c("Statement", "Test Statistic", "p-value")) %>%
+  kable_styling(full_width = FALSE, position = "center")
+
+# I wanted to double check that the extremely small p-values from the Wilcox test were accurate so I performed
+# a second hypothesis test, a t-test.
+
+t_test_results <- lapply(names(statements), function(name) {
+  pre_mock <- statements[[name]][1]
+  post_mock <- statements[[name]][2]
+  
+  pre_statement_data <- data[[pre_mock]]
+  post_statement_data <- data[[post_mock]]
+  
+  pre <- confidence_scores[pre_statement_data]
+  post <- confidence_scores[post_statement_data]
+  
+  clean_confidence_data <- which(!is.na(pre) & !is.na(post))
+  pre_clean <- pre[clean_confidence_data]
+  post_clean <- post[clean_confidence_data]
+  
+  if (length(pre_clean) >= 2) {
+    test_result <- t.test(pre_clean, post_clean, paired = TRUE)
+    tibble(
+      Statement = name,
+      t_statistic = test_result$statistic,
+      p_value = test_result$p.value
+    )
+  } else {
+    tibble(
+      Statement = name,
+      t_statistic = NA,
+      p_value = NA
+    )
+  }
+})
+
+t_test_df <- bind_rows(t_test_results)
+print(t_test_df)
+
+```
+
+```{r}
 # Principal Component Analysis 
 
 # IMPORTANT NOTE: CONVERSION TO NUMERICAL PERFORMED IN THIS ORDER:
