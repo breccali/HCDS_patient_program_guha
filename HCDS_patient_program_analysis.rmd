@@ -1,0 +1,435 @@
+---
+title: "HCDS Patient Program Analysis"
+author: "Rebecca Li"
+date: "2025-06-01"
+output: pdf_document
+header-includes:
+  - \usepackage{setspace}
+  - \setstretch{1.5}
+---
+
+```{r}
+# Preparing the data:
+
+#install.packages("tidyverse")
+#install.packages("patchwork")
+#install.packages("kableExtra")
+#install.packages("matrixStats")
+#install.packages("factoextra")
+library(kableExtra)
+library(patchwork)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(matrixStats)
+library(factoextra)
+
+
+data <- read.csv("/home/rstudio/HCDS work/guha_patient_program.csv")
+view(data)
+head(data)
+
+```
+
+
+```{r}
+# Exploratory Data Analysis: 
+
+# Agreement Indicators: All Statements
+agreement_levels <- c("DISAGREE", "DO NOT AGREE", "NEUTRAL", "AGREE", "STRONGLY AGREE")
+agreement_colors <- c(
+    "DISAGREE" = "#d73027",
+    "DO NOT AGREE" = "orange",
+    "NEUTRAL" = "yellow",
+    "AGREE" = "#91cf60",
+    "STRONGLY AGREE" = "skyblue"
+)
+
+###
+
+agree_statement_data <- data %>%
+  pivot_longer(cols = all_of(c(
+    "PREBRIEFING.INCREASED.MY.CONFIDENCE",
+    "PREBRIEFING.WAS.BENEFICIAL.TO.MY.LEARNING",
+    "I.AM.BETTER.PREPARED.TO.RESPOND.TO.CHANGES.IN.MY.PATIENT.S.CONDITION",
+    "I.DEVELOPED.A.BETTER.UNDERSTANDING.OF.THE.PATIENT.S.CONDITION.DEPICTED.IN.THE.SIM",
+    "I.FELT.EMPOWERED.TO.MAKE.DECISIONS.ABOUT.WHAT.PATIENT.CARE.WAS.NEEDED"
+)),
+  names_to = "statement", values_to = "response")
+agree_statement_data$response <- factor(agree_statement_data$response, levels = agreement_levels)
+
+count_data <- agree_statement_data %>%
+  group_by(statement, response) %>%
+dplyr::summarise(count = dplyr::n(), .groups = "drop") %>%
+  group_by(statement) %>%
+  mutate(percent = count / sum(count)*100)
+
+agreement_percentage <- count_data %>%
+  filter(response %in% c("AGREE", "STRONGLY AGREE")) %>%
+  group_by(statement) %>%
+  summarise(combined_percent = sum(percent)) %>%
+  mutate(label = paste0(round(combined_percent, 1), "%"))
+
+labels <- c(
+  "PREBRIEFING.INCREASED.MY.CONFIDENCE" = "Prebriefing Increased my Confidence.",
+  "PREBRIEFING.WAS.BENEFICIAL.TO.MY.LEARNING" = "Prebriefing was Beneficial to my Learning.",
+  "I.AM.BETTER.PREPARED.TO.RESPOND.TO.CHANGES.IN.MY.PATIENT.S.CONDITION" = "I am Better Prepared...Patient's Condition.",
+  "I.DEVELOPED.A.BETTER.UNDERSTANDING.OF.THE.PATIENT.S.CONDITION.DEPICTED.IN.THE.SIM" = "I Developed...Condition Depicted in the Sim.",
+  "I.FELT.EMPOWERED.TO.MAKE.DECISIONS.ABOUT.WHAT.PATIENT.CARE.WAS.NEEDED" = "I Felt Empowered...Patient Care Needed."
+)
+
+ggplot(count_data, aes(x = statement, y = percent, fill = response)) +
+  geom_bar(stat = "identity", position = "stack") +
+  coord_flip() +
+  scale_fill_manual(values = agreement_colors) +
+  scale_x_discrete(labels = labels) +   
+  labs(x = NULL, y = "Percentage", fill = "Response") +
+  theme_minimal() +
+  geom_text(data = agreement_percentage, aes(x = statement, y = 102, label = label), inherit.aes = FALSE, size = 3.5)
+
+###
+
+agree_statement_data <- data %>%
+  pivot_longer(cols = all_of(c(
+    "I.AM.MORE.CONFIDENT.IN.MY.ASSESSMENT.SKILLS",
+    "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.PRIORITIZE.CARE.AND.INTERVENTIONS",
+    "I.AM.MORE.CONFIDENT.IN.COMMUNICATING.WITH.MY.PATIENT",
+    "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.REPORT.INFORMATION.TO.THE.HEALTHCARE.TEAM",
+    "I.AM.MORE.CONFIDENT.IN.PROVIDING.SAFETY.MEASURES.FOR.PATIENTS"
+)),
+  names_to = "statement", values_to = "response")
+agree_statement_data$response <- factor(agree_statement_data$response, levels = agreement_levels)
+
+count_data <- agree_statement_data %>%
+  group_by(statement, response) %>%
+dplyr::summarise(count = dplyr::n(), .groups = "drop") %>%
+  group_by(statement) %>%
+  mutate(percent = count / sum(count)*100)
+
+agreement_percentage <- count_data %>%
+  filter(response %in% c("AGREE", "STRONGLY AGREE")) %>%
+  group_by(statement) %>%
+  summarise(combined_percent = sum(percent)) %>%
+  mutate(label = paste0(round(combined_percent, 1), "%"))
+
+labels <- c(
+  "I.AM.MORE.CONFIDENT.IN.MY.ASSESSMENT.SKILLS" = "I am more Confident in my Assessment Skills.",
+  "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.PRIORITIZE.CARE.AND.INTERVENTIONS" = "I am more Confident...Prioritize Care and Interventions.",
+  "I.AM.MORE.CONFIDENT.IN.COMMUNICATING.WITH.MY.PATIENT" = "I am more Confident in Communicating with my Patient.",
+  "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.REPORT.INFORMATION.TO.THE.HEALTHCARE.TEAM" = "I am more Confident...to the Healthcare Team.",
+  "I.AM.MORE.CONFIDENT.IN.PROVIDING.SAFETY.MEASURES.FOR.PATIENTS" = "I am more Confident...Safety Measures for Patients."
+)
+
+ggplot(count_data, aes(x = statement, y = percent, fill = response)) +
+  geom_bar(stat = "identity", position = "stack") +
+  coord_flip() +
+  scale_fill_manual(values = agreement_colors) +
+  scale_x_discrete(labels = labels) +   
+  labs(x = NULL, y = "Percentage", fill = "Response") +
+  theme_minimal() + 
+  geom_text(data = agreement_percentage, aes(x = statement, y = 102, label = label), inherit.aes = FALSE, size = 3.5)
+
+###
+
+agree_statement_data <- data %>%
+  pivot_longer(cols = all_of(c(
+    "DEBRIEFING.CONTRIBUTED.TO.MY.HEALTHCARE.KNOWLEDGE",
+    "DEBRIEFING.ALLOWED.ME.TO.TALK.ABOUT.MY.FEELINGS.BEFORE.FOCUSING.ON.THE.SCENARIO",
+    "DEBRIEFING.WAS.VALUABLE.IN.HELPING.ME.IMPROVE.MY.CLINICAL.JUDGMENT",
+    "DEBRIEFING.PROVIDED.OPPORTUNITIES.TO.SELF.REFLECT.ON.MY.PERFORMANCE.DURING.SIMULATION"
+)),
+  names_to = "statement", values_to = "response")
+agree_statement_data$response <- factor(agree_statement_data$response, levels = agreement_levels)
+
+count_data <- agree_statement_data %>%
+  group_by(statement, response) %>%
+dplyr::summarise(count = dplyr::n(), .groups = "drop") %>%
+  group_by(statement) %>%
+  mutate(percent = count / sum(count)*100)
+
+agreement_percentage <- count_data %>%
+  filter(response %in% c("AGREE", "STRONGLY AGREE")) %>%
+  group_by(statement) %>%
+  summarise(combined_percent = sum(percent)) %>%
+  mutate(label = paste0(round(combined_percent, 1), "%"))
+
+labels <- c(
+  "DEBRIEFING.CONTRIBUTED.TO.MY.HEALTHCARE.KNOWLEDGE" = "Debriefing Contributed to my Healthcare Knowledge",
+  "DEBRIEFING.ALLOWED.ME.TO.TALK.ABOUT.MY.FEELINGS.BEFORE.FOCUSING.ON.THE.SCENARIO" = "Debriefing Allowed me...Focusing on the Scenario.",
+  "DEBRIEFING.WAS.VALUABLE.IN.HELPING.ME.IMPROVE.MY.CLINICAL.JUDGMENT" = "Debriefing was Valuable...Improve my Clinical Judgement.",
+  "DEBRIEFING.PROVIDED.OPPORTUNITIES.TO.SELF.REFLECT.ON.MY.PERFORMANCE.DURING.SIMULATION" = "Debriefing Provided...Performance during Simulation."
+)
+
+ggplot(count_data, aes(x = statement, y = percent, fill = response)) +
+  geom_bar(stat = "identity", position = "stack") +
+  coord_flip() +
+  scale_fill_manual(values = agreement_colors) +
+  scale_x_discrete(labels = labels) +   
+  labs(x = NULL, y = "Percentage", fill = "Response") +
+  theme_minimal() + 
+  geom_text(data = agreement_percentage, aes(x = statement, y = 102, label = label), inherit.aes = FALSE, size = 3.5)
+
+
+```
+
+```{r}
+# Highest strongly agree/agree rate: 
+# Debriefing was Valuable...Clinial Judgement.
+# Debriefing Provided...Performance During Sim.
+
+# Lowest strongly agree/agree rate: 
+# Prebriefing Increased my Confidence
+# Prebriefing was Beneficial to my Learning
+
+# Overall, prebriefing was generally had a lesser agreement rate compared to other opinions, while debriefing statements saw greater success.
+```
+
+
+```{r}
+# Checking Standard Practices:
+
+count_data <- data %>%
+dplyr::count(reponse = DID.THE.SIMULATION...EDUCATIONAL.ACTIVITY.MEET.THE.STATED.EDUCATIONAL.OBJECTIVES.FOR.THIS.ACTIVITY.) %>%
+  mutate(percent = n / sum(n)*100) %>%
+  mutate(
+    ypos = cumsum(percent) - 0.5*percent,
+    label = paste0(reponse, "\n", round(percent, 1), "%")
+)
+
+ggplot(count_data, aes(x = "", y = percent, fill = reponse)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = ypos, label = label), color = "black") +
+  theme_void() +
+  labs(title = "Did the Simulation...Educational Activity meet the Stated Educational Objectives for this Activity?") +
+  scale_fill_manual(values = c("YES" = "skyblue", "NO" = "pink")) +
+  theme(
+    plot.title = element_text(size = 10)
+)
+
+###
+
+count_data <- data %>%
+dplyr::count(reponse = DID.THE.EDUCATIONAL.INFORMATION.PROVIDED.BY.THE.PRESENT.EDUCATOR..DOES.NOT.INCLUDE.SIM.LAB.STAFF..MEET.THE.STATED.EDUCATIONAL.OBJECTIVES.FOR.THIS.ACTIVITY.) %>%
+  mutate(percent = n / sum(n)*100) %>%
+  mutate(
+    ypos = cumsum(percent) - 0.5*percent,
+    label = paste0(reponse, "\n", round(percent, 1), "%")
+)
+    
+ggplot(count_data, aes(x = "", y = percent, fill = reponse)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = ypos, label = label), color = "black") +
+  theme_void() +
+  labs(title = "Did the Educational Information...does not Include Sim Lab...meet the Stated Educational Objectives for this Activity?") +
+  scale_fill_manual(values = c("YES" = "skyblue", "NO" = "pink")) +
+  theme(
+    plot.title = element_text(size = 8)
+)
+
+###
+
+count_data <- data %>%
+dplyr::count(reponse = DID.YOU.PARTICIPATE.IN.A.MOCK.CODE.) %>%
+  mutate(percent = n / sum(n)*100) %>%
+  mutate(
+    ypos = cumsum(percent) - 0.5*percent,
+    label = paste0(reponse, "\n", round(percent, 1), "%")
+)
+
+ggplot(count_data, aes(x = "", y = percent, fill = reponse)) +
+  geom_bar(stat = "identity", width = 0.5) +
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = ypos, label = label), color = "black") +
+  theme_void() +
+  labs(title = "Did you Participate in a Mock Code?") +
+  scale_fill_manual(values = c("YES" = "skyblue", "NO" = "pink")) +
+  theme(
+    plot.title = element_text(size = 11)
+)
+
+# Yes: 29%, No: 71%
+```
+```{r}
+# Performing some hypothesis testing on the mock code:
+# Ho: There is no difference in responses between participants that performed the mock code vs. those who didn't.
+# Ha: There is a difference in responses between participants that performed the mock code vs. those who didn't.
+# alpha = 0.05
+
+agreement_scores <- c(
+  "STRONGLY DISAGREE" = 1,
+  "DISAGREE" = 2,
+  "NEUTRAL" = 3,
+  "AGREE" = 4,
+  "STRONGLY AGREE" = 5
+)
+
+data_mock_code_participation <- data %>%
+  mutate(mocK_participated = DID.YOU.PARTICIPATE.IN.A.MOCK.CODE.)
+
+agree_statement_data <- data_mock_code_participation %>%
+  pivot_longer(cols = all_of(c(
+    "PREBRIEFING.INCREASED.MY.CONFIDENCE",
+    "PREBRIEFING.WAS.BENEFICIAL.TO.MY.LEARNING",
+    "I.AM.BETTER.PREPARED.TO.RESPOND.TO.CHANGES.IN.MY.PATIENT.S.CONDITION",
+    "I.DEVELOPED.A.BETTER.UNDERSTANDING.OF.THE.PATIENT.S.CONDITION.DEPICTED.IN.THE.SIM",
+    "I.FELT.EMPOWERED.TO.MAKE.DECISIONS.ABOUT.WHAT.PATIENT.CARE.WAS.NEEDED",
+    
+    "I.AM.MORE.CONFIDENT.IN.MY.ASSESSMENT.SKILLS",
+    "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.PRIORITIZE.CARE.AND.INTERVENTIONS",
+    "I.AM.MORE.CONFIDENT.IN.COMMUNICATING.WITH.MY.PATIENT",
+    "I.AM.MORE.CONFIDENT.IN.MY.ABILITY.TO.REPORT.INFORMATION.TO.THE.HEALTHCARE.TEAM",
+    "I.AM.MORE.CONFIDENT.IN.PROVIDING.SAFETY.MEASURES.FOR.PATIENTS",
+    
+    "DEBRIEFING.CONTRIBUTED.TO.MY.HEALTHCARE.KNOWLEDGE",
+    "DEBRIEFING.ALLOWED.ME.TO.TALK.ABOUT.MY.FEELINGS.BEFORE.FOCUSING.ON.THE.SCENARIO",
+    "DEBRIEFING.WAS.VALUABLE.IN.HELPING.ME.IMPROVE.MY.CLINICAL.JUDGMENT",
+    "DEBRIEFING.PROVIDED.OPPORTUNITIES.TO.SELF.REFLECT.ON.MY.PERFORMANCE.DURING.SIMULATION"
+  )),
+  names_to = "statement", values_to = "response") %>%
+  mutate(
+    score = agreement_scores[response], 
+    participated = factor(mocK_participated, levels = c("NO", "YES"))
+)
+
+t_test_results <- agree_statement_data %>%
+  filter(!is.na(score), !is.na(participated)) %>%
+  group_by(statement) %>%
+  do(broom::tidy(t.test(score ~ participated, data = .)))
+
+t_test_results <- t_test_results %>%
+  select(statement, estimate1, estimate2, statistic, p.value) %>%
+  rename(
+    `Estimate (No)` = estimate1,
+    `Estimate (Yes)` = estimate2,
+)
+
+kable(t_test_results, digits = 3, caption = "T-test Results by Statement") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed", "responsive"), 
+                font_size = 10)
+
+```
+
+
+
+
+
+
+
+```{r}
+# Confidence Indicators: All Statements
+
+confidence_levels <- c("VERY UNCONFIDENT", "UNCONFIDENCE", "NEUTRAL", "CONFIDENT", "VERY CONFIDENT")
+confidence_colors <- c(
+  "VERY UNCONFIDENT" = "#d73027",
+  "UNCONFIDENCE" = "orange",
+  "NEUTRAL" = "yellow",
+  "CONFIDENT" = "#91cf60",
+  "VERY CONFIDENT" = "skyblue"
+)
+
+###
+
+barchart <- function(response, title) {
+  count_data <- data %>%
+dplyr::count(response = {{ response }}) %>%
+    mutate(response = factor(response, levels = confidence_levels)) %>%
+    filter(!is.na(response)) %>%      
+    mutate(percent = n / sum(n)*100)
+  
+  ggplot(count_data, aes(x = 1, y = percent, fill = response)) +
+    geom_bar(stat = "identity", width = 0.5) +
+    coord_flip() +
+    scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+    labs(title = title, x = NULL, y = "Percent") +
+    theme_minimal() +
+    scale_fill_manual(values = confidence_colors) +
+    theme(
+      plot.title = element_text(size = 11)  
+    )
+}
+
+plot_1 <- barchart(
+  DEMONSTRATE.APPROPRIATE.COMMUNICATION.TECHNIQUES..I.E..CLOSED.LOOP.COMMUNICATION..DURING.A.CODE.BLUE,
+  "Demonstrate Appropriate Communcation Techniques...During a Code Blue."
+)
+plot_2 <- barchart(
+  DEMONSTRATE.APPROPRIATE.COMMUNICATION.TECHNIQUES..I.E..CLOSED.LOOP.COMMUNICATION..DURING.A.CODE.BLUE2,
+  "Demonstrate Appropriate Communcation Techniques...During a Code Blue 2."
+)
+plot_1 / plot_2 
+
+plot_3 <- barchart(
+  USE.TEAMWORK.DURING.A.CODE.BLUE.SIMULATION,
+  "Use Teamwork During a Code Blue Simulation."
+)
+plot_4 <- barchart(
+  USE.TEAMWORK.DURING.A.CODE.BLUE.SIMULATION2,
+  "Use Teamwork During a Code Blue Simulation 2."
+)
+plot_3 / plot_4
+
+plot_5 <- barchart(
+  PROVIDE.APPROPRIATE.INTERVENTIONS.FOR.PATIENT.RESUSCITATION,
+  "Provide Appropriate Interventions for Patient Resuscitation."
+)
+plot_6 <- barchart(
+  PROVIDE.APPROPRIATE.INTERVENTIONS.FOR.PATIENT.RESUSCITATION2,
+  "Provide Appropriate Interventions for Patient Resuscitation 2."
+)
+plot_5 / plot_6
+
+plot_7 <- barchart(
+  data$DESCRIBE.THE.VARIOUS.ROLES.AND.ACTIONS.ASSOCIATED.WITH.THOSE.ROLES.DURING.A.CODE.BLUE,
+  "Describe the Various Roles and Actions Associated with those Roles during a Code Blue."
+)
+plot_8 <- barchart(
+  data$DESCRIBE.THE.VARIOUS.ROLES.AND.ACTIONS.ASSOCIATED.WITH.THOSE.ROLES.DURING.A.CODE.BLUE2,
+  "Describe the Various Roles and Actions Associated with those Roles during a Code Blue 2."
+)
+plot_7 / plot_8
+
+```
+
+
+```{r}
+# Principal Component Analysis 
+
+# IMPORTANT NOTE: CONVERSION TO NUMERICAL PERFORMED IN THIS ORDER:
+agreement_levels <- c("DISAGREE", "DO NOT AGREE", "NEUTRAL", "AGREE", "STRONGLY AGREE")
+
+data_to_numeric <- data %>%
+  select(11:24) %>%
+  mutate(across(everything(), ~ as.numeric(factor(.x, levels = agreement_levels, ordered = TRUE))))
+
+vars_var <- colVars(as.matrix(data_to_numeric))
+vars_var_clean <- vars_var[!is.na(vars_var)]
+cols_to_keep <- names(vars_var_clean)[vars_var_clean > 0]
+data_numeric_filtered <- data_to_numeric %>% select(all_of(cols_to_keep))
+
+res.pca <- prcomp(data_numeric_filtered, scale. = TRUE)
+summary(res.pca)
+
+loadings_pc1 <- res.pca$rotation[,1]
+print(loadings_pc1)
+
+var_explained <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2)
+cum_var_explained <- cumsum(var_explained)
+
+plot(cum_var_explained, type = "b", xlab = "Principal Component", 
+     ylab = "Cumulative Proportion of Variance Explained",
+     ylim = c(0,1))
+grid()
+
+fviz_pca_biplot(res.pca,
+                label = "var",            
+                geom.ind = "point",        
+                col.ind = "gray",    
+                repel = TRUE,
+                col.var = "blue")
+
+```
+
+
