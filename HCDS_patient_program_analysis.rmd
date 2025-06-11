@@ -25,13 +25,11 @@ library(tidyr)
 library(matrixStats)
 library(factoextra)
 
-
 data <- read.csv("/home/rstudio/HCDS work/guha_patient_program.csv")
 view(data)
 head(data)
 
 ```
-
 
 ```{r}
 # Exploratory Data Analysis: 
@@ -170,7 +168,6 @@ ggplot(count_data, aes(x = statement, y = percent, fill = response)) +
   theme_minimal() + 
   geom_text(data = agreement_percentage, aes(x = statement, y = 102, label = label), inherit.aes = FALSE, size = 3.5)
 
-
 ```
 
 ```{r}
@@ -184,7 +181,6 @@ ggplot(count_data, aes(x = statement, y = percent, fill = response)) +
 
 # Overall, prebriefing was generally had a lesser agreement rate compared to other opinions, while debriefing statements saw greater success.
 ```
-
 
 ```{r}
 # Checking Standard Practices:
@@ -259,8 +255,8 @@ ggplot(count_data, aes(x = "", y = percent, fill = reponse)) +
 # alpha = 0.05
 
 agreement_scores <- c(
-  "STRONGLY DISAGREE" = 1,
-  "DISAGREE" = 2,
+  "DISAGREE" = 1,
+  "DO NOT AGREE" = 2,
   "NEUTRAL" = 3,
   "AGREE" = 4,
   "STRONGLY AGREE" = 5
@@ -311,12 +307,6 @@ kable(t_test_results, digits = 3, caption = "T-test Results by Statement") %>%
                 font_size = 10)
 
 ```
-
-
-
-
-
-
 
 ```{r}
 # Confidence Indicators: All Statements
@@ -393,7 +383,6 @@ plot_7 / plot_8
 
 ```
 
-
 ```{r}
 # Principal Component Analysis 
 
@@ -431,5 +420,3 @@ fviz_pca_biplot(res.pca,
                 col.var = "blue")
 
 ```
-
-
