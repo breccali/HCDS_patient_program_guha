@@ -311,10 +311,10 @@ kable(t_test_results, digits = 3, caption = "T-test Results by Statement") %>%
 ```{r}
 # Confidence Indicators: All Statements
 
-confidence_levels <- c("VERY UNCONFIDENT", "UNCONFIDENCE", "NEUTRAL", "CONFIDENT", "VERY CONFIDENT")
+confidence_levels <- c("VERY UNCONFIDENT", "UNCONFIDENT", "NEUTRAL", "CONFIDENT", "VERY CONFIDENT")
 confidence_colors <- c(
   "VERY UNCONFIDENT" = "#d73027",
-  "UNCONFIDENCE" = "orange",
+  "UNCONFIDENT" = "orange",
   "NEUTRAL" = "yellow",
   "CONFIDENT" = "#91cf60",
   "VERY CONFIDENT" = "skyblue"
